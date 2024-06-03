@@ -17,7 +17,7 @@ tag := $(shell git tag --points-at HEAD)
 ifneq (,$(tag))
 version := $(tag)-$(version)
 endif
-LDFLAGS := -ldflags "-X main.version=$(version)"
+LDFLAGS := -ldflags '-X "main.version=$(version)"'
 export CGO_ENABLED := 0
 
 .PHONY: server cli worker virtual-worker test $(binaries)

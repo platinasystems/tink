@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -84,4 +85,11 @@ func (m *fakeManager) PullImage(_ context.Context, image string) error {
 	m.sleep()
 
 	return nil
+}
+
+func (m *fakeManager) GetContainerId(_ context.Context, image string) (string, error) {
+	m.logger.With("image", image).Info(fmt.Sprintf("Getting container id with image %s", image))
+	m.sleep()
+
+	return "", nil
 }

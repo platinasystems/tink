@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"fmt"
+	utility "github.com/platinasystems/go-common/v2/utilities"
+	"github.com/tinkerbell/tink/cmd/tink-worker/publisher"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,6 +25,11 @@ const (
 	defaultRetryCount           = 3
 	defaultMaxFileSize          = 10 * 1024 * 1024 // 10MB
 	defaultTimeoutMinutes       = 60
+	defaultTopic                = "provisioner-worker"
+	defaultSchemaRegistry       = "http://kafka:8081"
+	defaultBroker               = "kafka:9092"
+	defaultPeriod               = 2
+	defaultBuffer               = 5
 )
 
 // NewRootCommand creates a new Tink Worker Cobra root command.
@@ -41,8 +50,45 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			pwd := viper.GetString("registry-password")
 			registry := viper.GetString("docker-registry")
 			captureActionLogs := viper.GetBool("capture-action-logs")
+			topic := viper.GetString("topic")
+			schemaRegistry := viper.GetString("schema-registry")
+			broker := viper.GetString("broker")
+			host := viper.GetString("host")
+			targetHost := viper.GetString("target-host")
+			period := viper.GetString("sampling-period")
+			buffer := viper.GetString("sampling-buffer")
 
-			logger.With("version", version).Info("starting")
+			if utility.StringIsBlank(topic) {
+				topic = defaultTopic
+			}
+			if utility.StringIsBlank(schemaRegistry) {
+				schemaRegistry = defaultSchemaRegistry
+			}
+			if utility.StringIsBlank(broker) {
+				broker = defaultBroker
+			}
+			if utility.StringIsBlank(host) {
+				fmt.Println(fmt.Sprintf("unable to get worker host address from env [%s]", host))
+			}
+			if utility.StringIsBlank(targetHost) {
+				fmt.Println(fmt.Sprintf("unable to get target host address from env [%s]", targetHost))
+			}
+			samplingPeriod := parseIntEvn(period, defaultPeriod)
+			logsBuffer := parseIntEvn(buffer, defaultBuffer)
+
+			publisher.Init(&publisher.Configuration{
+				Topic:          topic,
+				Broker:         broker,
+				SchemaRegistry: schemaRegistry,
+				Host:           host,
+				TargetHost:     targetHost,
+				Period:         samplingPeriod,
+			})
+			publisher.LogQueue.SetLimit(logsBuffer)
+			l := worker.LoggerWrapper{Logger: logger}
+			l.With("version", version).Info("starting")
+
+			l.Info(fmt.Sprintf("Publisher Configuration %+v, buffer: %d", publisher.Config, logsBuffer))
 
 			conn, err := client.NewClientConn(
 				viper.GetString("tinkerbell-grpc-authority"),
@@ -142,4 +188,17 @@ func initViper(logger log.Logger, cmd *cobra.Command) error {
 	})
 
 	return nil
+}
+
+func parseIntEvn(str string, defaultValue int) (value int) {
+	var err error
+	if utility.StringIsNotBlank(str) {
+		if value, err = strconv.Atoi(str); err != nil {
+			fmt.Println(fmt.Sprintf("unable to convert env parameter [%s], using default %d: %v", str, defaultValue, err))
+			value = defaultValue
+		}
+	} else {
+		value = defaultValue
+	}
+	return
 }

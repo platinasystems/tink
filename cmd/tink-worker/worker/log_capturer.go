@@ -3,12 +3,17 @@ package worker
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/packethost/pkg/log"
+	utility "github.com/platinasystems/go-common/v2/utilities"
+	avro2 "github.com/platinasystems/pcc-models/v2/bare_metal/avro"
+	"github.com/tinkerbell/tink/cmd/tink-worker/publisher"
+	"io"
+	"math"
+	"time"
 )
 
 // DockerLogCapturer is a LogCapturer that can stream docker container logs to an io.Writer.
@@ -38,6 +43,10 @@ func NewDockerLogCapturer(cli client.ContainerAPIClient, logger log.Logger, writ
 
 // CaptureLogs streams container logs to the capturer's writer.
 func (l *DockerLogCapturer) CaptureLogs(ctx context.Context, id string) {
+	l.HandleLogs(ctx, id, "", "")
+}
+
+func (l *DockerLogCapturer) HandleLogs(ctx context.Context, id string, wfId string, actionName string) {
 	reader, err := l.dockerClient.ContainerLogs(ctx, id, types.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -52,6 +61,61 @@ func (l *DockerLogCapturer) CaptureLogs(ctx context.Context, id string) {
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		fmt.Fprintln(l.writer, scanner.Text())
+		var (
+			p              pLog
+			provisionerLog avro2.Log
+		)
+		_, _ = fmt.Fprintln(l.writer, scanner.Text())
+
+		if err = json.Unmarshal(scanner.Bytes(), &p); err != nil {
+			_, _ = fmt.Fprintln(l.writer, fmt.Sprintf("unable to unmarshal %s: %v", scanner.Text(), err))
+			// if log doesn't match the json format send it as msg
+			p.Msg = scanner.Text()
+		}
+
+		if p.WorkflowID == "" && wfId != "" {
+			p.WorkflowID = wfId
+		}
+
+		if p.ActionName == "" && actionName != "" {
+			p.ActionName = actionName
+		}
+
+		provisionerLog.Host = publisher.Config.Host
+		provisionerLog.Timestamp = parseTs(p.Ts)
+		provisionerLog.Msg = p.Msg
+		provisionerLog.WorkflowID = p.WorkflowID
+		provisionerLog.ActionName = p.ActionName
+		provisionerLog.Status = p.Status
+		provisionerLog.Id = p.Id
+		provisionerLog.Level = p.Level
+
+		// skip empty logs
+		if utility.StringIsBlank(provisionerLog.Msg) && utility.StringIsBlank(provisionerLog.Status) {
+			continue
+		}
+
+		go publisher.LogQueue.Enqueue(provisionerLog)
 	}
+}
+
+type pLog struct {
+	avro2.Log
+	Ts interface{}
+}
+
+func parseTs(ts interface{}) (timestamp int64) {
+	switch t := ts.(type) {
+	case float64:
+		sec, dec := math.Modf(t)
+		timestamp = time.Unix(int64(sec), int64(dec*(1e9))).Unix()
+		return
+	case string:
+		if date, err := time.Parse(time.RFC3339, t); err == nil {
+			timestamp = date.Unix()
+			return
+		}
+	}
+	timestamp = time.Now().Unix()
+	return
 }

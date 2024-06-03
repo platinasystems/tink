@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	avro2 "github.com/platinasystems/pcc-models/v2/bare_metal/avro"
+	"github.com/tinkerbell/tink/cmd/tink-worker/publisher"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -90,6 +92,7 @@ func WithPrivileged(privileged bool) Option {
 // LogCapturer emits container logs.
 type LogCapturer interface {
 	CaptureLogs(ctx context.Context, containerID string)
+	HandleLogs(ctx context.Context, containerID string, wfID string, actionName string)
 }
 
 // ContainerManager manages linux containers for Tinkerbell workers.
@@ -100,6 +103,71 @@ type ContainerManager interface {
 	WaitForFailedContainer(ctx context.Context, id string, failedActionStatus chan pb.State)
 	RemoveContainer(ctx context.Context, id string) error
 	PullImage(ctx context.Context, image string) error
+	GetContainerId(ctx context.Context, image string) (string, error)
+}
+
+type LoggerWrapper struct {
+	Logger     log.Logger
+	WorkflowId string
+	ActionName string
+	Status     string
+}
+
+func (c LoggerWrapper) With(args ...interface{}) LoggerWrapper {
+	c.Logger.With(args...)
+	for i := range args {
+		if v, ok := args[i].(string); ok {
+			switch v {
+			case "workflowID":
+				if i < (len(args) - 1) {
+					if s, ok := args[i+1].(string); ok {
+						c.WorkflowId = s
+					}
+				}
+			case "actionName":
+				if i < (len(args) - 1) {
+					if s, ok := args[i+1].(string); ok {
+						c.ActionName = s
+					}
+				}
+			case "status":
+				if i < (len(args) - 1) {
+					switch s := args[i+1].(type) {
+					case string:
+						c.Status = s
+					case pb.State:
+						c.Status = s.String()
+					}
+				}
+			}
+		}
+	}
+	return c
+}
+
+func (c LoggerWrapper) Info(args ...string) {
+	c.Logger.Info(args)
+	c.Send("info", args...)
+}
+func (c LoggerWrapper) Debug(args ...string) {
+	c.Logger.Debug(args)
+	c.Send("debug", args...)
+}
+func (c LoggerWrapper) Error(err error, args ...string) {
+	c.Logger.Error(err, args)
+	c.Send("error", err.Error())
+}
+func (c LoggerWrapper) Send(level string, args ...string) {
+	p := avro2.Log{
+		Host:       publisher.Config.Host,
+		WorkflowID: c.WorkflowId,
+		ActionName: c.ActionName,
+		Timestamp:  time.Now().Unix(),
+		Level:      level,
+		Status:     c.Status,
+		Msg:        strings.Join(args, " "),
+	}
+	go publisher.LogQueue.Enqueue(p)
 }
 
 // Worker details provide all the context needed to run workflows.
@@ -108,7 +176,7 @@ type Worker struct {
 	logCapturer      LogCapturer
 	containerManager ContainerManager
 	tinkClient       pb.WorkflowServiceClient
-	logger           log.Logger
+	logger           LoggerWrapper
 
 	dataDir string
 	maxSize int64
@@ -134,7 +202,7 @@ func NewWorker(
 		containerManager: containerManager,
 		logCapturer:      logCapturer,
 		tinkClient:       tinkClient,
-		logger:           logger,
+		logger:           LoggerWrapper{Logger: logger},
 		captureLogs:      false,
 		createPrivileged: false,
 		retries:          3,
@@ -149,12 +217,12 @@ func NewWorker(
 }
 
 // getLogger is a helper function to get logging out of a context, or use the default logger.
-func (w Worker) getLogger(ctx context.Context) *log.Logger {
+func (w Worker) getLogger(ctx context.Context) *LoggerWrapper {
 	loggerIface := ctx.Value(loggingContextKey)
 	if loggerIface == nil {
 		return &w.logger
 	}
-	return loggerIface.(*log.Logger)
+	return loggerIface.(*LoggerWrapper)
 }
 
 // execute executes a workflow action, optionally capturing logs.
@@ -188,7 +256,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	}
 
 	if w.captureLogs {
-		go w.logCapturer.CaptureLogs(ctx, id)
+		go w.logCapturer.HandleLogs(ctx, id, wfID, action.GetName())
 	}
 
 	st, err := w.containerManager.WaitForContainer(timeCtx, id)
@@ -418,7 +486,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 	}
 }
 
-func exitWithGrpcError(err error, l log.Logger) {
+func exitWithGrpcError(err error, l LoggerWrapper) {
 	if err != nil {
 		errStatus, _ := status.FromError(err)
 		l.With("errorCode", errStatus.Code()).Error(err)
@@ -480,7 +548,7 @@ func (w *Worker) getWorkflowData(ctx context.Context, workflowID string) {
 }
 
 func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.WorkflowActionStatus) {
-	l := w.getLogger(ctx).With("workflowID", actionStatus.GetWorkflowId,
+	l := w.getLogger(ctx).With("workflowID", actionStatus.GetWorkflowId(),
 		"workerID", actionStatus.GetWorkerId(),
 		"actionName", actionStatus.GetActionName(),
 		"taskName", actionStatus.GetTaskName(),
@@ -499,7 +567,7 @@ func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.Workfl
 		l.Error(err)
 	}
 
-	if isValidDataFile(f, w.maxSize, data, l) {
+	if isValidDataFile(f, w.maxSize, data, l.Logger) {
 		h := sha.New()
 		if _, ok := workflowDataSHA[actionStatus.GetWorkflowId()]; !ok {
 			checksum := base64.StdEncoding.EncodeToString(h.Sum(data))
@@ -544,7 +612,7 @@ func (w *Worker) sendUpdate(ctx context.Context, st *pb.WorkflowActionStatus, da
 	}
 }
 
-func openDataFile(wfDir string, l log.Logger) *os.File {
+func openDataFile(wfDir string, l LoggerWrapper) *os.File {
 	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		l.Error(err)

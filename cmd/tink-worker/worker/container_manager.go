@@ -2,8 +2,10 @@ package worker
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -27,23 +29,23 @@ type DockerClient interface {
 }
 
 type containerManager struct {
-	logger          log.Logger
+	logger          LoggerWrapper
 	cli             DockerClient
 	registryDetails RegistryConnDetails
 }
 
 // getLogger is a helper function to get logging out of a context, or use the default logger.
-func (m *containerManager) getLogger(ctx context.Context) *log.Logger {
+func (m *containerManager) getLogger(ctx context.Context) *LoggerWrapper {
 	loggerIface := ctx.Value(loggingContextKey)
 	if loggerIface == nil {
 		return &m.logger
 	}
-	return loggerIface.(*log.Logger)
+	return loggerIface.(*LoggerWrapper)
 }
 
 // NewContainerManager returns a new container manager.
 func NewContainerManager(logger log.Logger, cli DockerClient, registryDetails RegistryConnDetails) ContainerManager {
-	return &containerManager{logger, cli, registryDetails}
+	return &containerManager{LoggerWrapper{Logger: logger}, cli, registryDetails}
 }
 
 func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs, privileged bool) (string, error) {
@@ -140,4 +142,20 @@ func (m *containerManager) RemoveContainer(ctx context.Context, id string) error
 
 	// send API call to remove the container
 	return errors.Wrap(m.cli.ContainerRemove(ctx, id, opts), "DOCKER STOP")
+}
+
+func (m *containerManager) GetContainerId(ctx context.Context, image string) (string, error) {
+	containers, err := m.cli.ContainerList(ctx, types.ContainerListOptions{
+		All: true,
+	})
+	if err != nil {
+		fmt.Println(fmt.Sprintf("fail to get containers %v", err))
+		return "", err
+	}
+	for _, c := range containers {
+		if strings.Contains(c.Image, image) {
+			return c.ID, nil
+		}
+	}
+	return "", nil
 }

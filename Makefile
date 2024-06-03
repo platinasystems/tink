@@ -2,6 +2,7 @@ help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
 
 all: cli server worker ## Build all binaries for host OS and CPU
+worker: worker ## Build tink-worker for host OS and CPU
 
 -include rules.mk
 -include lint.mk
@@ -9,6 +10,8 @@ all: cli server worker ## Build all binaries for host OS and CPU
 
 crosscompile: $(crossbinaries) ## Build all binaries for Linux and all supported CPU arches
 images: tink-cli-image tink-server-image tink-worker-image virtual-worker-image ## Build all docker images
+worker-image: tink-worker-image ## Build all docker images ## Build tink-worker docker image
+
 run: crosscompile run-stack ## Builds and runs the Tink stack (tink, db, cli) via docker-compose
 
 test: e2etest-setup ## Run tests
