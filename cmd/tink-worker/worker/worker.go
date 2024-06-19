@@ -114,7 +114,6 @@ type LoggerWrapper struct {
 }
 
 func (c LoggerWrapper) With(args ...interface{}) LoggerWrapper {
-	c.Logger.With(args...)
 	for i := range args {
 		if v, ok := args[i].(string); ok {
 			switch v {
@@ -130,7 +129,7 @@ func (c LoggerWrapper) With(args ...interface{}) LoggerWrapper {
 						c.ActionName = s
 					}
 				}
-			case "status":
+			case "status", "actionStatus":
 				if i < (len(args) - 1) {
 					switch s := args[i+1].(type) {
 					case string:
@@ -142,7 +141,12 @@ func (c LoggerWrapper) With(args ...interface{}) LoggerWrapper {
 			}
 		}
 	}
-	return c
+	return LoggerWrapper{
+		Logger:     c.Logger.With(args...),
+		WorkflowId: c.WorkflowId,
+		ActionName: c.ActionName,
+		Status:     c.Status,
+	}
 }
 
 func (c LoggerWrapper) Info(args ...string) {
@@ -155,7 +159,11 @@ func (c LoggerWrapper) Debug(args ...string) {
 }
 func (c LoggerWrapper) Error(err error, args ...string) {
 	c.Logger.Error(err, args)
-	c.Send("error", err.Error())
+	eMsg := "action error"
+	if err != nil {
+		eMsg = err.Error()
+	}
+	c.Send("error", eMsg)
 }
 func (c LoggerWrapper) Send(level string, args ...string) {
 	p := avro2.Log{
