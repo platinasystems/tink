@@ -87,6 +87,7 @@ func (l *DockerLogCapturer) HandleLogs(ctx context.Context, id string, wfId stri
 		provisionerLog.WorkflowID = p.WorkflowID
 		provisionerLog.ActionName = p.ActionName
 		provisionerLog.Status = p.Status
+		provisionerLog.OpStatus = p.OpStatus
 		provisionerLog.Id = p.Id
 		provisionerLog.Level = p.Level
 
