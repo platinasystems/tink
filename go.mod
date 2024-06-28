@@ -157,9 +157,9 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/profile v1.6.0 // indirect
-	github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240524110823-93402c8b78d5 // indirect
+	github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240703133036-91bd1eb91f88 // indirect
 	github.com/platinasystems/go-kafka-avro v0.0.0-20240301140546-8d81ba9c9409 // indirect
-	github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240522153728-56941939c108 // indirect
+	github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240703132731-30ec665b34c0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
