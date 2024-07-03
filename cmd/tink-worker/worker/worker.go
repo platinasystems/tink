@@ -341,7 +341,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 		}
 		for wfContext, err := res.Recv(); err == nil && wfContext != nil; wfContext, err = res.Recv() {
 			wfID := wfContext.GetWorkflowId()
-			l = l.With("workflowID", wfID)
+			l := l.With("workflowID", wfID)
 			ctx := context.WithValue(ctx, loggingContextKey, &l)
 
 			actions, err := w.tinkClient.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfID})

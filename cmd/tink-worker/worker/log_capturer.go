@@ -87,6 +87,7 @@ func (l *DockerLogCapturer) HandleLogs(ctx context.Context, id string, wfId stri
 		provisionerLog.WorkflowID = p.WorkflowID
 		provisionerLog.ActionName = p.ActionName
 		provisionerLog.Status = p.Status
+		provisionerLog.OpStatus = p.OpStatus
 		provisionerLog.Id = p.Id
 		provisionerLog.Level = p.Level
 
@@ -108,14 +109,14 @@ func parseTs(ts interface{}) (timestamp int64) {
 	switch t := ts.(type) {
 	case float64:
 		sec, dec := math.Modf(t)
-		timestamp = time.Unix(int64(sec), int64(dec*(1e9))).Unix()
+		timestamp = time.Unix(int64(sec), int64(dec*(1e9))).UTC().Unix()
 		return
 	case string:
 		if date, err := time.Parse(time.RFC3339, t); err == nil {
-			timestamp = date.Unix()
+			timestamp = date.UTC().Unix()
 			return
 		}
 	}
-	timestamp = time.Now().Unix()
+	timestamp = time.Now().UTC().Unix()
 	return
 }

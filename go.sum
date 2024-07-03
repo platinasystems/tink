@@ -1440,6 +1440,12 @@ github.com/pkg/term v0.0.0-20180423043932-cda20d4ac917/go.mod h1:eCbImbZ95eXtAUI
 github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942/go.mod h1:eCbImbZ95eXtAUIbLAuAVnBnwf83mjf6QIVH8SHYwqQ=
 github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240524110823-93402c8b78d5 h1:T41GUy+iwIKNDbODtOxxy1P19Uf+PIwWd0INDTmN9Bg=
 github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240524110823-93402c8b78d5/go.mod h1:wrqujhioPxd0IG5vxjogqSkghWJRvCPUVu9TPu2vz4M=
+github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240628094703-2c6ed852f30a h1:3WdnTpcjmsrIygnXITfOaXUsOJced1R8H7IgS+D6C0I=
+github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240628094703-2c6ed852f30a/go.mod h1:Jagc3i79Zf7rthYstJQZ2GFUA4/Ut65zPIl+MWJoTfA=
+github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240628133141-1799ecd8f255 h1:b/bkctlofKDQP27UAid5OwOEiHZ7478aMeOByCSK39c=
+github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240628133141-1799ecd8f255/go.mod h1:H3vBH/0n/cAaubBz0EyAlhRBlRM1jERBqcikaTFQgIU=
+github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240703133036-91bd1eb91f88 h1:LLw0nAiy5MePqXo0ZcOInX+gYFuZlyPUd2Et75r/1Kk=
+github.com/platinasystems/go-common/v2 v2.1.0-masterdev.0.20240703133036-91bd1eb91f88/go.mod h1:zFX/gYUqjx8igjh9uAKePfEeSP2cafEVzlXYFeidwq0=
 github.com/platinasystems/go-common/v2 v2.1.0 h1:TrMPQcOX/5D1jBlNUE57VPDprovWIpZPkR8mPYjjOQo=
 github.com/platinasystems/go-common/v2 v2.1.0/go.mod h1:/JVYXroTEiblYsSpwvjqPJj7m3HYEEysYml6IRdedIw=
 github.com/platinasystems/go-kafka-avro v0.0.0-20220922095626-ea59ed6f9aeb/go.mod h1:Wkk72Ljb4IdxtyAbh0TqsG89nq2xrHagi3FGKWOrR+M=
@@ -1448,6 +1454,14 @@ github.com/platinasystems/go-kafka-avro v0.0.0-20240301140546-8d81ba9c9409/go.mo
 github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20230213130143-777404d51263/go.mod h1:nFxbcAzUiBVdM1MVVOgLOxglSCyRSiCrLWjbVQZMXlc=
 github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240522153728-56941939c108 h1:Vhswk4iJeOgYF5170MVFjx5cELKNbSxkdH3dVERL7yY=
 github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240522153728-56941939c108/go.mod h1:W+ToRa99cnDa8bu5TkXO/sZACOs8q+6ImGHd0KntEw0=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240627144817-75a17252b688 h1:uvirUoupx/VCwbrkqKLvairGHkhmITVsKy9UoMikau4=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240627144817-75a17252b688/go.mod h1:W+ToRa99cnDa8bu5TkXO/sZACOs8q+6ImGHd0KntEw0=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240628094546-ab7c956cd4b5 h1:QLfMkKIzxRBpFZu0HxrlyEIhym+jaLfI8b+I/dX9fmQ=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240628094546-ab7c956cd4b5/go.mod h1:W+ToRa99cnDa8bu5TkXO/sZACOs8q+6ImGHd0KntEw0=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240628133030-21617134417b h1:xax3Qe/7prJRjFllZxP7AoOKGu0Uj9bohaNzynu64Tk=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240628133030-21617134417b/go.mod h1:W+ToRa99cnDa8bu5TkXO/sZACOs8q+6ImGHd0KntEw0=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240703132731-30ec665b34c0 h1:59nkEhEoI942GkrkTEAHh54F/XyHcZxFPsBTkGU6has=
+github.com/platinasystems/pcc-models/v2 v2.1.0-masterdev.0.20240703132731-30ec665b34c0/go.mod h1:W+ToRa99cnDa8bu5TkXO/sZACOs8q+6ImGHd0KntEw0=
 github.com/pmezard/go-difflib v0.0.0-20151028094244-d8ed2627bdf0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
