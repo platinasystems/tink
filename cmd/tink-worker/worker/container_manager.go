@@ -66,8 +66,9 @@ func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wf
 
 	wfDir := filepath.Join(defaultDataDir, wfID)
 	hostConfig := &container.HostConfig{
-		Privileged: privileged,
-		Binds:      []string{wfDir + ":/workflow"},
+		Privileged:  privileged,
+		Binds:       []string{wfDir + ":/workflow"},
+		NetworkMode: container.NetworkMode("host"),
 	}
 
 	if pidConfig := action.GetPid(); pidConfig != "" {
