@@ -68,7 +68,7 @@ func (l *DockerLogCapturer) HandleLogs(ctx context.Context, id string, wfId stri
 		_, _ = fmt.Fprintln(l.writer, scanner.Text())
 
 		if err = json.Unmarshal(scanner.Bytes(), &p); err != nil {
-			_, _ = fmt.Fprintln(l.writer, fmt.Sprintf("unable to unmarshal %s: %v", scanner.Text(), err))
+			//_, _ = fmt.Fprintln(l.writer, fmt.Sprintf("unable to unmarshal %s: %v", scanner.Text(), err))
 			// if log doesn't match the json format send it as msg
 			p.Msg = scanner.Text()
 		}
